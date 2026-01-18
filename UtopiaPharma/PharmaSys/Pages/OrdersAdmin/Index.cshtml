@@ -1,0 +1,89 @@
+﻿@page
+@model PharmaSys.Pages.OrdersAdmin.IndexModel
+@{
+    ViewData["Title"] = "Commandes Clients";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Commandes Web</h2>
+        <div class="text-muted">Gestion des achats en ligne</div>
+    </div>
+</div>
+
+<div class="card-soft p-3">
+    <div class="table-responsive">
+        <table class="table align-middle table-hover">
+            <thead class="bg-light">
+                <tr>
+                    <th>N° Commande</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Total</th>
+                    <th>Statut</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Orders.Count == 0)
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            Aucune commande web pour le moment.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var o in Model.Orders)
+                    {
+                        <tr>
+                            <td class="fw-bold">#@o.Id</td>
+                            <td class="text-muted">@o.OrderDate.ToString("dd/MM/yyyy HH:mm")</td>
+
+                            <td>
+                                <div class="fw-bold">@o.ClientName</div>
+                                <div class="small text-muted">@o.ClientPhone</div>
+
+                                @if (o.User != null)
+                                {
+                                    <span class="badge bg-info text-dark" style="font-size:10px;">Compte Membre</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark border" style="font-size:10px;">Invité</span>
+                                }
+                            </td>
+
+                            <td class="fw-bold text-primary">@o.TotalAmount.ToString("C")</td>
+
+                            <td>
+                                @if (o.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark">En attente</span>
+                                }
+                                else if (o.Status == "Paid")
+                                {
+                                    <span class="badge bg-success">Payée / Livrée</span>
+                                }
+                                else if (o.Status == "Cancelled")
+                                {
+                                    <span class="badge bg-danger">Annulée</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@o.Status</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a href="/OrdersAdmin/Details?id=@o.Id" class="btn btn-sm btn-primary btn-pill">
+                                    Gérer <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

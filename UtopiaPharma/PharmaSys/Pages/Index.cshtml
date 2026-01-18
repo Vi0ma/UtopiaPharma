@@ -1,0 +1,68 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary">Bienvenue chez Utopia Pharmacie</h1>
+        <p class="lead text-muted">Votre santé, notre priorité.</p>
+    </div>
+
+    <div class="row justify-content-center gap-4">
+        <div class="col-md-5">
+            <div class="card h-100 shadow-sm border-0 hover-effect">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4 text-success">
+                        <i class="bi bi-shop" style="font-size: 4rem;"></i>
+                    </div>
+                    <h3 class="card-title fw-bold">Je suis Client</h3>
+                    <p class="card-text text-muted mb-4">
+                        Consultez notre catalogue de médicaments et envoyez vos demandes de réservation directement au staff.
+                    </p>
+                    <a href="/Shop/Index" class="btn btn-success btn-pill px-5 py-2 fs-5">
+                        <i class="bi bi-arrow-right-circle me-2"></i> Accéder à la Boutique
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5">
+            <div class="card h-100 shadow-sm border-0 hover-effect">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4 text-primary">
+                        <i class="bi bi-shield-lock" style="font-size: 4rem;"></i>
+                    </div>
+                    <h3 class="card-title fw-bold">Espace Staff</h3>
+                    <p class="card-text text-muted mb-4">
+                        Accès réservé au personnel pour la gestion de pharmacie.
+                    </p>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <a href="/Dashboard/Index" class="btn btn-primary btn-pill px-5 py-2 fs-5">
+                            <i class="bi bi-speedometer2 me-2"></i> Tableau de bord
+                        </a>
+                    }
+                    else
+                    {
+                        <a href="/Identity/Account/Login" class="btn btn-primary btn-pill px-5 py-2 fs-5">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> Se connecter
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-effect {
+        transition: transform 0.3s ease;
+    }
+
+        .hover-effect:hover {
+            transform: translateY(-5px);
+        }
+</style>

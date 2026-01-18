@@ -1,0 +1,55 @@
+﻿@page
+@model PharmaSys.Pages.Shop.IndexModel
+@{
+    ViewData["Title"] = "Boutique";
+}
+
+<link rel="stylesheet" href="~/css/client.css" />
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 class="m-0">Boutique</h2>
+        <a class="btn btn-outline-primary" asp-page="/Shop/Cart">Panier (@Model.CartCount)</a>
+    </div>
+
+    <form method="get" class="row g-2 mb-4">
+        <div class="col-md-6">
+            <input name="q" value="@Model.Q" class="form-control" placeholder="Rechercher un médicament..." />
+        </div>
+        <div class="col-md-4">
+            <select name="catId" class="form-select">
+                <option value="">Toutes catégories</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id" selected="@(Model.CatId == c.Id)">
+                        @c.Name
+                    </option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-primary">Rechercher</button>
+        </div>
+    </form>
+
+    <div class="row g-3">
+        @foreach (var p in Model.Products)
+        {
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@p.Name</h5>
+                        <p class="text-muted mb-2">@p.CategoryName</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="fw-bold">@p.Price.ToString("0.00") DH</div>
+                            <form method="post" asp-page-handler="Add">
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <button class="btn btn-sm btn-success">Ajouter</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

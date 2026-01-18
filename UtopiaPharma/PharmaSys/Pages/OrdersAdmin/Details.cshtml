@@ -1,0 +1,138 @@
+﻿@page
+@model PharmaSys.Pages.OrdersAdmin.DetailsModel
+@{
+    ViewData["Title"] = "Détails Commande";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <a href="/OrdersAdmin/Index" class="text-decoration-none text-muted mb-2 d-inline-block">
+                <i class="bi bi-arrow-left"></i> Retour à la liste
+            </a>
+            <h2 class="fw-bold mb-0">Commande #@Model.Order.OrderNumber</h2>
+            <div class="text-muted">
+                Du @Model.Order.OrderDate.ToString("dd MMMM yyyy à HH:mm")
+            </div>
+        </div>
+
+        <div>
+            @if (Model.Order.Status == "Pending")
+            {
+                <span class="badge bg-warning text-dark fs-5 px-4 py-2">En attente</span>
+            }
+            else if (Model.Order.Status == "Paid")
+            {
+                <span class="badge bg-success fs-5 px-4 py-2">Validée & Livrée</span>
+            }
+            else if (Model.Order.Status == "Cancelled")
+            {
+                <span class="badge bg-danger fs-5 px-4 py-2">Annulée</span>
+            }
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-primary">Articles commandés</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th class="text-center">Qté</th>
+                                <th class="text-end">Prix Unit.</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Order.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@(item.Medication?.Name ?? item.Name)</div>
+                                        <div class="small text-muted">REF: @(item.Medication?.Code ?? "N/A")</div>
+                                    </td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end">@item.UnitPrice.ToString("0.00") DH</td>
+                                    <td class="text-end fw-bold">@item.LineTotal.ToString("0.00") DH</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold py-3">TOTAL À PAYER</td>
+                                <td class="text-end fw-bold text-primary fs-5 py-3">
+                                    @Model.Order.TotalAmount.ToString("0.00") DH
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-primary">Client</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center text-primary" style="width:50px;height:50px;font-size:1.5rem;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">@Model.Order.ClientName</div>
+                            <div class="text-muted small">Invité</div>
+                        </div>
+                    </div>
+
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><i class="bi bi-telephone me-2 text-muted"></i> @Model.Order.ClientPhone</li>
+                        <li class="mb-2"><i class="bi bi-envelope me-2 text-muted"></i> @Model.Order.ClientEmail</li>
+                        <li><i class="bi bi-geo-alt me-2 text-muted"></i> @Model.Order.ClientAddress</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-primary">Traitement</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Order.Status == "Pending")
+                    {
+                        <div class="d-grid gap-2">
+                            <form method="post" asp-page-handler="UpdateStatus">
+                                <input type="hidden" name="id" value="@Model.Order.Id" />
+                                <input type="hidden" name="status" value="Paid" />
+                                <button type="submit" class="btn btn-success btn-pill w-100 py-2">
+                                    <i class="bi bi-check-circle me-2"></i> Valider la commande
+                                </button>
+                            </form>
+
+                            <form method="post" asp-page-handler="UpdateStatus">
+                                <input type="hidden" name="id" value="@Model.Order.Id" />
+                                <input type="hidden" name="status" value="Cancelled" />
+                                <button type="submit" class="btn btn-outline-danger btn-pill w-100">
+                                    <i class="bi bi-x-circle me-2"></i> Annuler
+                                </button>
+                            </form>
+                        </div>
+                        
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-lock"></i> Cette commande est clôturée.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

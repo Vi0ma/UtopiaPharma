@@ -1,0 +1,139 @@
+﻿@page
+@model PharmaSys.Pages.Sales.DetailsModel
+@{
+    ViewData["Title"] = "Détails Vente";
+}
+
+<div class="d-flex align-items-start justify-content-between mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Détails Vente</h2>
+        <div class="text-muted">@Model.Sale.InvoiceNo</div>
+    </div>
+    <a class="btn btn-light btn-pill" href="/Sales/Index"><i class="bi bi-x-lg"></i></a>
+</div>
+
+<div class="card-soft p-3 mb-3">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <div class="text-muted">Date</div>
+            <div class="fw-semibold">@Model.Sale.SaleDate.ToString("yyyy-MM-dd HH:mm")</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted">Client</div>
+            <div class="fw-semibold">@((Model.Sale.Client != null) ? Model.Sale.Client.FullName : "Vente rapide")</div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-muted">Statut</div>
+            @if (Model.Sale.Status == "Paid")
+            {
+                <span class="badge bg-success">Payée</span>
+            }
+            else if (Model.Sale.Status == "Unpaid")
+            {
+
+                <span class="badge bg-danger">Impayée</span>
+            }
+            else if (Model.Sale.Status == "PartiallyPaid")
+            {
+
+                <span class="badge bg-warning text-dark">Partielle</span>
+            }
+            else
+            {
+
+                <span class="badge bg-secondary">@Model.Sale.Status</span>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="card-soft p-3">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Médicament</th>
+                    <th>Qté</th>
+                    <th>Prix</th>
+                    <th>Remise</th>
+                    <th class="text-end">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var it in Model.Sale.Items)
+                {
+                    var line = (it.UnitPrice * it.Quantity) - it.Discount;
+                    <tr>
+                        <td>@it.Medication?.Name</td>
+                        <td>@it.Quantity</td>
+                        <td>@it.UnitPrice.ToString("0.##")</td>
+                        <td>@it.Discount.ToString("0.##")</td>
+                        <td class="text-end fw-semibold">@line.ToString("0.##") MAD</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <hr />
+    <div class="d-flex justify-content-between">
+        <div class="text-muted">Total Vente</div>
+        <div class="fw-bold fs-5">@Model.Sale.Total.ToString("0.00") MAD</div>
+    </div>
+    <div class="d-flex justify-content-between text-success">
+        <div class="text-muted">Montant Perçu</div>
+        <div class="fw-bold">@Model.Sale.Paid.ToString("0.00") MAD</div>
+    </div>
+    <div class="d-flex justify-content-between text-danger">
+        <div class="text-muted">Reste à Payer</div>
+        <div class="fw-bold">@((Model.Sale.Total - Model.Sale.Paid).ToString("0.00")) MAD</div>
+    </div>
+</div>
+
+<div class="card-soft p-3 mt-3 border-top border-primary border-2">
+    <h5 class="fw-bold text-primary mb-3"><i class="bi bi-wallet2"></i> Modifier le Paiement</h5>
+
+    <form method="post" asp-page-handler="UpdateStatus" class="row align-items-end g-3">
+        <input type="hidden" name="id" value="@Model.Sale.Id" />
+
+        <div class="col-md-4">
+            <label class="form-label small text-muted">Statut :</label>
+            <select name="NewStatus" id="statusSelect" class="form-select" onchange="toggleAmountInput()">
+                <option value="Paid" selected="@(Model.Sale.Status == "Paid")">Payée (Totalité)</option>
+                <option value="PartiallyPaid" selected="@(Model.Sale.Status == "PartiallyPaid")">Partiellement Payée</option>
+                <option value="Unpaid" selected="@(Model.Sale.Status == "Unpaid")">Impayée (0.00)</option>
+            </select>
+        </div>
+
+        <div class="col-md-4" id="amountInputGroup" style="display:none;">
+            <label class="form-label small text-muted">Montant encaissé (MAD) :</label>
+            <input type="number" step="0.01" name="NewPaidAmount" class="form-control"
+                   value="@Model.NewPaidAmount.ToString("0.00").Replace(",", ".")" />
+            <div class="form-text text-primary" style="font-size:11px;">
+                Total commande : @Model.Sale.Total.ToString("0.00")
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Confirmer</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleAmountInput() {
+        var status = document.getElementById("statusSelect").value;
+        var inputDiv = document.getElementById("amountInputGroup");
+
+        if (status === "PartiallyPaid") {
+            inputDiv.style.display = "block"; // Afficher
+        } else {
+            inputDiv.style.display = "none";  // Cacher
+        }
+    }
+
+    // Lancer la fonction au chargement de la page pour mettre le bon état
+    document.addEventListener("DOMContentLoaded", function() {
+        toggleAmountInput();
+    });
+</script>

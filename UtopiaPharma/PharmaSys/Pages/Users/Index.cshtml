@@ -1,0 +1,55 @@
+﻿@page
+@model PharmaSys.Pages.Users.IndexModel
+@{
+    ViewData["Title"] = "Gestion des Utilisateurs";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Équipe & Accès</h2>
+        <div class="text-muted">Gérer les comptes employés</div>
+    </div>
+    <a class="btn btn-primary btn-pill" href="/Users/Create">
+        <i class="bi bi-person-plus me-2"></i>Nouvel Utilisateur
+    </a>
+</div>
+
+<div class="card-soft p-3">
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Model.UsersWithRoles)
+            {
+                <tr>
+                    <td class="fw-bold">@u.Username</td>
+                    <td class="text-muted">@u.Email</td>
+                    <td>
+                        @if (u.Role == "Admin")
+                        {
+                            <span class="badge bg-danger">Administrateur</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">Pharmacien</span>
+                        }
+                    </td>
+                    <td class="text-end">
+                        @if (u.Username != "admin@pharmasys.com")
+                        {
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@u.Id" class="d-inline" onsubmit="return confirm('Supprimer cet utilisateur ?');">
+                                <button class="btn btn-sm btn-light btn-pill text-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

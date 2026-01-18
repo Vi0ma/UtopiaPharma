@@ -1,0 +1,40 @@
+﻿@page
+@model PharmaSys.Pages.Users.CreateModel
+@{
+    ViewData["Title"] = "Créer Utilisateur";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card-soft p-4">
+            <h3 class="fw-bold mb-4">Créer un compte employé</h3>
+
+            <form method="post">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Email (Identifiant)</label>
+                    <input asp-for="Input.Email" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Mot de passe</label>
+                    <input asp-for="Input.Password" type="password" class="form-control" />
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Rôle</label>
+                    <select asp-for="Input.Role" class="form-select">
+                        <option value="Pharmacien">Pharmacien </option>
+                        <option value="Admin">Administrateur </option>
+                    </select>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-pill flex-grow-1">Créer le compte</button>
+                    <a href="/Users/Index" class="btn btn-light btn-pill">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

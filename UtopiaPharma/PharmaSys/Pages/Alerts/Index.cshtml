@@ -1,0 +1,154 @@
+﻿@page
+@model PharmaSys.Pages.Alerts.IndexModel
+@{
+    ViewData["Title"] = "Alertes Stock & Péremption";
+    int lowStockCount = Model.LowStockMeds.Count;
+    int expiryCount = Model.ExpiringMeds.Count;
+}
+
+<div class="d-flex align-items-start justify-content-between mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Centre d'Alertes</h2>
+        <div class="text-muted">
+            <span class="text-danger fw-bold">@lowStockCount</span> ruptures et 
+            <span class="text-warning fw-bold">@expiryCount</span> péremptions détectées
+        </div>
+    </div>
+    <a class="btn btn-primary btn-pill" href="/SupplierOrders/Create">
+        <i class="bi bi-cart-plus me-2"></i>Commander du stock
+    </a>
+</div>
+
+<ul class="nav nav-pills mb-3" id="alertsTab" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active d-flex align-items-center gap-2" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock-pane" type="button" role="tab">
+            <i class="bi bi-box-seam"></i> Stock Critique
+            @if(lowStockCount > 0) { <span class="badge bg-danger rounded-pill">@lowStockCount</span> }
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link d-flex align-items-center gap-2" id="expiry-tab" data-bs-toggle="tab" data-bs-target="#expiry-pane" type="button" role="tab">
+            <i class="bi bi-hourglass-split"></i> Dates d'Expiration
+            @if(expiryCount > 0) { <span class="badge bg-warning text-dark rounded-pill">@expiryCount</span> }
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="alertsTabContent">
+    
+    <div class="tab-pane fade show active" id="stock-pane" role="tabpanel">
+        <div class="card-soft p-3">
+            @if (lowStockCount == 0)
+            {
+                <div class="text-center py-5 text-success">
+                    <i class="bi bi-check-circle fs-1 mb-2"></i>
+                    <p class="fw-bold">Tout va bien ! Aucun stock critique.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th>Fournisseur</th>
+                                <th>Stock Actuel</th>
+                                <th>Seuil Min</th>
+                                <th>Statut</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in Model.LowStockMeds)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">@m.Name</div>
+                                        <div class="small text-muted">@m.Code</div>
+                                    </td>
+                                    <td class="text-muted">@(m.Supplier?.Name ?? "-")</td>
+                                    <td>
+                                        <span class="fw-bold text-danger fs-5">@m.Stock</span>
+                                    </td>
+                                    <td class="text-muted">@m.StockMin</td>
+                                    <td>
+                                        @if (m.Stock == 0)
+                                        {
+                                            <span class="badge bg-danger">Rupture totale</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Stock faible</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="/SupplierOrders/Create?supplierId=@m.SupplierId" class="btn btn-sm btn-outline-primary btn-pill">
+                                            <i class="bi bi-plus-lg"></i> Commander
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="expiry-pane" role="tabpanel">
+        <div class="card-soft p-3">
+            @if (expiryCount == 0)
+            {
+                <div class="text-center py-5 text-success">
+                    <i class="bi bi-calendar-check fs-1 mb-2"></i>
+                    <p class="fw-bold">Aucun produit périmé ou proche de la date.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Produit</th>
+                                <th>Date d'expiration</th>
+                                <th>Jours restants</th>
+                                <th>Emplacement</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in Model.ExpiringMeds)
+                            {
+                                var daysLeft = (m.ExpirationDate.Value - DateTime.Today).TotalDays;
+                                var rowClass = daysLeft < 0 ? "table-danger" : (daysLeft < 30 ? "table-warning" : "");
+                                
+                                <tr class="@rowClass">
+                                    <td class="fw-bold">@m.Name</td>
+                                    <td>@m.ExpirationDate.Value.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @if (daysLeft < 0)
+                                        {
+                                            <span class="fw-bold text-danger">PÉRIMÉ (@Math.Abs(Math.Round(daysLeft)) j)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="fw-bold">@Math.Round(daysLeft) jours</span>
+                                        }
+                                    </td>
+                                    <td>@m.Location</td>
+                                    <td class="text-end">
+                                        <a href="/Medications/Edit?id=@m.Id" class="btn btn-sm btn-light btn-pill">
+                                            <i class="bi bi-pencil"></i> Gérer
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

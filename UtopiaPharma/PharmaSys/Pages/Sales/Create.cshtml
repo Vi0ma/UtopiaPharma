@@ -1,0 +1,258 @@
+﻿@page
+@model PharmaSys.Pages.Sales.CreateModel
+@{
+    ViewData["Title"] = "Nouvelle Vente";
+}
+
+<div class="d-flex align-items-start justify-content-between mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Point de Vente</h2>
+        <div class="text-muted">Nouvelle transaction</div>
+    </div>
+    <a class="btn btn-light btn-pill" href="/Sales/Index"><i class="bi bi-x-lg"></i></a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card-soft p-3">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Client</label>
+                <select class="form-select" id="clientId">
+                    <option value="0"> Vente rapide</option>
+                    @foreach (var c in Model.Clients)
+                    {
+                        <option value="@c.Id">@c.FullName (@c.Code)</option>
+                    }
+                </select>
+            </div>
+
+            
+
+            <div class="mb-2">
+                <label class="form-label fw-semibold">Ajouter un médicament</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                    <input id="searchMed" class="form-control border-start-0" placeholder="Scanner ou taper le nom..." autocomplete="off" />
+                </div>
+            </div>
+
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table align-middle table-hover">
+                    <thead class="sticky-top bg-white">
+                        <tr>
+                            <th>Produit</th>
+                            <th>Stock</th>
+                            <th>Prix</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="medList">
+                        @foreach (var m in Model.Medications)
+                        {
+                            <tr class="medRow">
+                                <td>
+                                    <div class="fw-bold">@m.Name</div>
+                                    <div class="text-muted small">@m.Dosage • @m.Code</div>
+                                </td>
+                                <td>
+                                    @if (m.Stock <= m.StockMin)
+                                    {
+                                        <span class="badge bg-danger">@m.Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-dark">@m.Stock</span>
+                                    }
+                                </td>
+                                <td class="fw-bold text-primary">@m.SalePrice.ToString("0.##")</td>
+                                <td class="text-end">
+                                    <button type="button"
+                                            class="btn btn-sm btn-primary btn-pill addBtn"
+                                            data-id="@m.Id"
+                                            data-name="@m.Name @m.Dosage"
+                                            data-price="@m.SalePrice"
+                                            data-stock="@m.Stock">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <form method="post" class="card-soft p-3 d-flex flex-column h-100" id="saleForm">
+            <input type="hidden" name="Input.ClientId" id="hClientId" value="0" />
+            <input type="hidden" name="Input.PrescriptionId" id="hPrescriptionId" value="" />
+            <input type="hidden" name="Input.PaymentMethod" id="hPayMethod" />
+            <input type="hidden" name="Input.Paid" id="hPaid" />
+
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                <div class="fw-bold fs-5"><i class="bi bi-cart3 me-2"></i>Panier</div>
+                <button type="button" class="btn btn-outline-danger btn-pill btn-sm" id="clearCart">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+
+            <div id="cartItems" class="flex-grow-1 d-flex flex-column gap-2 mb-3" style="max-height: 300px; overflow-y: auto;">
+                <div class="text-center text-muted py-4">Panier vide</div>
+            </div>
+
+            <div class="bg-light p-3 rounded-3 mt-auto">
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Paiement</label>
+                        <select class="form-select form-select-sm" id="payMethod">
+                            <option value="Cash">Espèces</option>
+                            <option value="Card">Carte Bancaire</option>
+                            <option value="Check">Chèque</option>
+                            <option value="Credit">À Crédit</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Reçu (DH)</label>
+                        <input class="form-control form-control-sm text-end fw-bold" id="paid" type="number" step="0.01" />
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-2">
+                    <div class="text-muted">Total à payer</div>
+                    <div class="fw-bold fs-2 text-primary" id="total">0,00 DH</div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-3">
+                <button class="btn btn-success btn-lg btn-pill" type="submit" id="btnSubmit">
+                    <i class="bi bi-check-circle-fill me-2"></i>VALIDER LA VENTE
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const cart = [];
+        const cartEl = document.getElementById('cartItems');
+        const totalEl = document.getElementById('total');
+        const paidInp = document.getElementById('paid');
+
+        function renderCart(){
+          cartEl.innerHTML = '';
+          let total = 0;
+
+          if(cart.length === 0) {
+              cartEl.innerHTML = '<div class="text-center text-muted py-4">Panier vide</div>';
+              totalEl.innerText = "0,00 DH";
+              paidInp.value = "";
+              return;
+          }
+
+          cart.forEach((it, idx) => {
+            const line = (it.price * it.qty);
+            total += line;
+
+            const div = document.createElement('div');
+            div.className = "card p-2 border-0 shadow-sm";
+            div.innerHTML = `
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <div class="fw-bold text-dark">${it.name}</div>
+                  <div class="small text-muted">${it.price.toFixed(2)} x ${it.qty}</div>
+                </div>
+                <div class="text-end ms-2">
+                    <div class="fw-bold">${line.toFixed(2)}</div>
+                    <button type="button" class="btn btn-link text-danger p-0 small text-decoration-none" onclick="removeItem(${idx})">Retirer</button>
+                </div>
+              </div>
+              <div class="mt-1">
+                 <input class="form-control form-control-sm w-50" type="number" min="1" max="${it.stock}" value="${it.qty}" onchange="updateQty(${idx}, this.value)">
+              </div>
+            `;
+            cartEl.appendChild(div);
+          });
+
+          totalEl.innerText = total.toFixed(2) + " DH";
+
+          // Par défaut, on remplit le montant "Reçu" avec le total (pour aller plus vite)
+          if(document.activeElement !== paidInp) {
+              paidInp.value = total.toFixed(2);
+          }
+
+          // Rebuild hidden inputs
+          document.querySelectorAll("input[name^='Input.Items']").forEach(x => x.remove());
+          cart.forEach((it, i) => {
+            addHidden(`Input.Items[${i}].MedicationId`, it.id);
+            addHidden(`Input.Items[${i}].Quantity`, it.qty);
+            addHidden(`Input.Items[${i}].UnitPrice`, it.price);
+          });
+        }
+
+        function addHidden(name, value){
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = name;
+          inp.value = value;
+          document.getElementById('saleForm').appendChild(inp);
+        }
+
+        window.removeItem = function(i){ cart.splice(i,1); renderCart(); }
+        window.updateQty = function(i,v){
+            let q = parseInt(v||1);
+            if(q > cart[i].stock) { alert("Stock insuffisant !"); q = cart[i].stock; }
+            cart[i].qty = Math.max(1, q);
+            renderCart();
+        }
+
+        document.querySelectorAll('.addBtn').forEach(btn=>{
+          btn.addEventListener('click', ()=>{
+            const id = parseInt(btn.dataset.id);
+            const name = btn.dataset.name;
+            const price = parseFloat(btn.dataset.price.replace(',', '.')); // Fix virgule
+            const stock = parseInt(btn.dataset.stock);
+
+            if(stock <= 0) { alert("Produit en rupture de stock !"); return; }
+
+            const exist = cart.find(x=>x.id===id);
+            if(exist) {
+                if(exist.qty + 1 > stock) { alert("Stock max atteint !"); return; }
+                exist.qty += 1;
+            }
+            else {
+                cart.push({id,name,price,stock,qty:1});
+            }
+            renderCart();
+          });
+        });
+
+        document.getElementById('clearCart').addEventListener('click', ()=>{
+          if(confirm('Vider le panier ?')) { cart.length = 0; renderCart(); }
+        });
+
+        document.getElementById('searchMed').addEventListener('input', (e)=>{
+          const v = e.target.value.toLowerCase();
+          document.querySelectorAll('#medList tr').forEach(tr=>{
+            tr.style.display = tr.innerText.toLowerCase().includes(v) ? '' : 'none';
+          });
+        });
+
+        document.getElementById('saleForm').addEventListener('submit', (e)=>{
+          if(cart.length === 0){
+            e.preventDefault();
+            alert("Le panier est vide !");
+            return;
+          }
+
+          document.getElementById('hClientId').value = document.getElementById('clientId').value;
+          document.getElementById('hPrescriptionId').value = document.getElementById('prescriptionId').value;
+          document.getElementById('hPayMethod').value = document.getElementById('payMethod').value;
+          document.getElementById('hPaid').value = document.getElementById('paid').value || 0;
+        });
+
+        renderCart();
+    </script>
+}

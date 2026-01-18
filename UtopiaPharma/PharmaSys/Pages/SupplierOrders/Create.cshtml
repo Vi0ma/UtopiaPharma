@@ -1,0 +1,217 @@
+﻿@page
+@model PharmaSys.Pages.SupplierOrders.CreateModel
+@{
+    ViewData["Title"] = "Nouvelle Commande Fournisseur";
+}
+
+<div class="d-flex align-items-start justify-content-between mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Nouvelle Commande</h2>
+        <div class="text-muted">Réapprovisionnement de stock</div>
+    </div>
+    <a class="btn btn-light btn-pill" href="/SupplierOrders/Index"><i class="bi bi-x-lg"></i></a>
+</div>
+
+<form method="post" id="orderForm">
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card-soft p-3 mb-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Fournisseur</label>
+                        <select asp-for="Input.SupplierId" class="form-select" id="supplierSelect">
+                            <option value="">-- Sélectionner un fournisseur --</option>
+                            @foreach (var s in Model.Suppliers)
+                            {
+                                <option value="@s.Id">@s.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.SupplierId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date de commande</label>
+                        <input asp-for="Input.OrderDate" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-soft p-3">
+                <div class="mb-2">
+                    <label class="form-label fw-semibold">Ajouter des produits au bon de commande</label>
+                    <input id="searchMed" class="form-control" placeholder="Taper le nom du médicament..." />
+                </div>
+
+                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                    <table class="table align-middle table-hover">
+                        <thead class="sticky-top bg-white">
+                            <tr>
+                                <th>Produit</th>
+                                <th>Stock Actuel</th>
+                                <th>Prix Achat</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="medList">
+                            @foreach (var m in Model.Medications)
+                            {
+                                <tr class="medRow">
+                                    <td>
+                                        <div class="fw-bold">@m.Name</div>
+                                        <div class="small text-muted">@m.Code</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">@m.Stock</span>
+                                    </td>
+                                    <td class="text-primary fw-bold">@m.PurchasePrice.ToString("0.00")</td>
+                                    <td class="text-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary btn-pill addBtn"
+                                                data-id="@m.Id"
+                                                data-name="@m.Name"
+                                                data-price="@m.PurchasePrice">
+                                            Ajouter <i class="bi bi-plus"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card-soft p-3 h-100 d-flex flex-column">
+                <h5 class="fw-bold mb-3"><i class="bi bi-cart me-2"></i>Articles à commander</h5>
+
+                <div id="cartItems" class="flex-grow-1 d-flex flex-column gap-2" style="overflow-y:auto; max-height:400px;">
+                    <div class="text-center text-muted py-5">Aucun article sélectionné</div>
+                </div>
+
+                <div class="border-top pt-3 mt-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Total Estimé</span>
+                        <span class="fw-bold fs-4 text-primary" id="totalDisplay">0.00 DH</span>
+                    </div>
+
+                    <div class="alert alert-info py-2 small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Le stock sera mis à jour automatiquement.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 btn-pill py-2">
+                        <i class="bi bi-check-lg me-2"></i>Valider la Commande
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="hiddenInputs"></div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const cart = [];
+        const cartContainer = document.getElementById('cartItems');
+        const totalDisplay = document.getElementById('totalDisplay');
+        const hiddenContainer = document.getElementById('hiddenInputs');
+
+        // Recherche visuelle
+        document.getElementById('searchMed').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.medRow').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none';
+            });
+        });
+
+        // Boutons Ajouter
+        document.querySelectorAll('.addBtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = parseInt(btn.dataset.id);
+                const name = btn.dataset.name;
+                // Remplace la virgule par un point pour le parsing float
+                const price = parseFloat(btn.dataset.price.replace(',', '.'));
+
+                const existing = cart.find(x => x.id === id);
+                if (existing) {
+                    existing.qty += 10; // Par défaut +10 unités
+                } else {
+                    cart.push({ id, name, price, qty: 10 });
+                }
+                renderCart();
+            });
+        });
+
+        window.updateQty = (id, val) => {
+            const item = cart.find(x => x.id === id);
+            if(item) {
+                item.qty = parseInt(val);
+                if(item.qty < 1) item.qty = 1;
+                renderCart();
+            }
+        };
+
+        window.removeItem = (id) => {
+            const idx = cart.findIndex(x => x.id === id);
+            if(idx > -1) {
+                cart.splice(idx, 1);
+                renderCart();
+            }
+        };
+
+        function renderCart() {
+            cartContainer.innerHTML = '';
+            hiddenContainer.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                cartContainer.innerHTML = '<div class="text-center text-muted py-5">Aucun article sélectionné</div>';
+                totalDisplay.innerText = "0.00 DH";
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                const lineTotal = item.price * item.qty;
+                total += lineTotal;
+
+                // Affichage HTML
+                const div = document.createElement('div');
+                div.className = 'card p-2 border shadow-sm';
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-bold text-truncate">${item.name}</span>
+                        <button type="button" class="btn-close small" onclick="removeItem(${item.id})"></button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="input-group input-group-sm" style="width: 100px;">
+                            <input type="number" class="form-control" value="${item.qty}" min="1" onchange="updateQty(${item.id}, this.value)">
+                        </div>
+                        <div class="text-end">
+                            <div class="small text-muted">${item.price.toFixed(2)} DH</div>
+                            <div class="fw-bold">${lineTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                `;
+                cartContainer.appendChild(div);
+
+                // Inputs Hidden pour le POST C#
+                addHidden(`Items[${index}].MedicationId`, item.id);
+                addHidden(`Items[${index}].Quantity`, item.qty);
+
+                //  CORRECTION CRITIQUE ICI : "UnitPrice" (et non CostPrice)
+                addHidden(`Items[${index}].UnitPrice`, item.price);
+            });
+
+            totalDisplay.innerText = total.toFixed(2) + " DH";
+        }
+
+        function addHidden(name, value) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            hiddenContainer.appendChild(input);
+        }
+    </script>
+}

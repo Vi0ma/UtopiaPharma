@@ -1,0 +1,217 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using PharmaSys.Data
+@using PharmaSys.Services
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject AlertService AlertService
+
+@{
+    int alertsCount = 0;
+    if (SignInManager.IsSignedIn(User))
+    {
+        alertsCount = await AlertService.GetAlertsCountAsync(30);
+    }
+
+    string path = Context.Request.Path.Value?.ToLower() ?? "/";
+    bool IsActive(string p) => path.StartsWith(p);
+}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Utopia Pharmacie</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <style>
+        body {
+            background: #f5f7fb;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 270px;
+            background: #fff;
+            border-right: 1px solid #e9edf5;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: #2f6df6;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-item-link {
+            display: flex;
+            align-items: center;
+            gap: .7rem;
+            padding: .75rem .9rem;
+            border-radius: 12px;
+            color: #334155;
+            text-decoration: none;
+        }
+
+            .nav-item-link:hover {
+                background: #f2f6ff;
+            }
+
+            .nav-item-link.active {
+                background: #eef4ff;
+                color: #2f6df6;
+                font-weight: 600;
+            }
+
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e9edf5;
+        }
+
+        .searchbox {
+            background: #f3f6fb;
+            border: 1px solid #edf1f7;
+            border-radius: 14px;
+            padding: .6rem .9rem;
+            width: 560px;
+            max-width: 100%;
+        }
+
+            .searchbox input {
+                border: 0;
+                outline: 0;
+                background: transparent;
+                width: 100%;
+            }
+
+        .btn-pill {
+            border-radius: 14px;
+            padding: .6rem 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex app-shell">
+        <aside class="sidebar d-flex flex-column">
+            <a href="/" class="text-decoration-none text-dark">
+                <div class="p-3 d-flex align-items-center gap-2">
+                    <div class="brand-icon"><i class="bi bi-capsule"></i></div>
+                    <div>
+                        <div class="fw-bold">Utopia Pharmacie</div>
+                    </div>
+                </div>
+            </a>
+            <div class="px-3">
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <a class="nav-item-link @(IsActive("/dashboard") ? "active" : "")" href="/Dashboard/Index"><i class="bi bi-house"></i> Tableau de bord</a>
+                    <a class="nav-item-link @(IsActive("/medications") ? "active" : "")" href="/Medications/Index"><i class="bi bi-capsule-pill"></i> Médicaments</a>
+                    <a class="nav-item-link @(IsActive("/alerts") ? "active" : "")" href="/Alerts/Index">
+                        <i class="bi bi-exclamation-triangle"></i> Alertes
+                        @if (alertsCount > 0)
+                        {
+                            <span class="ms-auto badge rounded-pill bg-danger">@alertsCount</span>
+                        }
+                    </a>
+                    <a class="nav-item-link @(IsActive("/sales") ? "active" : "")" href="/Sales/Index"><i class="bi bi-cart"></i> Ventes</a>
+                    <a class="nav-item-link @(IsActive("/clients") ? "active" : "")" href="/Clients/Index"><i class="bi bi-people"></i> Clients</a>
+                    <a class="nav-item-link @(IsActive("/suppliers") ? "active" : "")" href="/Suppliers/Index"><i class="bi bi-box-seam"></i> Fournisseurs</a>
+                    <a class="nav-item-link @(IsActive("/supplierorders") ? "active" : "")" href="/SupplierOrders/Index"><i class="bi bi-clipboard-check"></i> Commandes Fourn.</a>
+                    <a class="nav-item-link @(IsActive("/ordersadmin") ? "active" : "")" href="/OrdersAdmin/Index"><i class="bi bi-basket"></i> Commandes Clients</a>
+                    <a class="nav-item-link @(IsActive("/shop") ? "active" : "")" href="/Shop/Index" style="color:#2f6df6;"><i class="bi bi-shop"></i> <strong>Espace Boutique</strong></a>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <div class="my-2 border-top"></div>
+                        <a class="nav-item-link @(IsActive("/reports") ? "active" : "")" href="/Reports/Index"><i class="bi bi-bar-chart"></i> Rapports</a>
+                        <a class="nav-item-link @(IsActive("/users") ? "active" : "")" href="/Users/Index" style="color: #7c3aed;"><i class="bi bi-person-gear"></i> Utilisateurs</a>
+                    }
+                }
+                else
+                {
+                    <div class="text-muted small fw-bold mb-2 mt-2 px-2">NAVIGATION CLIENT</div>
+                    <a class="nav-item-link @(IsActive("/shop") && !path.Contains("cart") ? "active" : "")" href="/Shop/Index"><i class="bi bi-shop"></i> Boutique</a>
+                    <a class="nav-item-link @(IsActive("/shop/cart") ? "active" : "")" href="/Shop/Cart"><i class="bi bi-cart3"></i> Mon Panier</a>
+                }
+            </div>
+        </aside>
+
+        <div class="flex-grow-1 d-flex flex-column">
+            <div class="topbar px-4 py-3 d-flex align-items-center justify-content-between">
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <form class="d-flex align-items-center gap-2 searchbox" method="get" action="/Search/Index">
+                        <i class="bi bi-search text-muted"></i>
+                        <input name="q" id="globalSearch" value="@(Context.Request.Query["q"])" placeholder="Rechercher..." />
+                    </form>
+                }
+                else
+                {
+                    <div></div>
+                }
+
+                <div class="d-flex align-items-center gap-3">
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        var u = await UserManager.GetUserAsync(User);
+
+                        // ✅ LOGIQUE : On affiche l'initiale seulement si c'est l'Admin
+                        var initials = "";
+                        if (User.IsInRole("Admin"))
+                        {
+                            initials = (u?.FullName ?? "Admin").Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(x => x[0]).Aggregate("", (a, b) => a + b).ToUpper();
+                        }
+
+                        <a class="btn btn-light position-relative btn-pill" href="/Alerts/Index">
+                            <i class="bi bi-bell"></i>
+                            @if (alertsCount > 0)
+                            {
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@alertsCount</span>
+                            }
+                        </a>
+
+                        <div class="dropdown">
+                            <button class="btn btn-light d-flex align-items-center gap-2 dropdown-toggle btn-pill" data-bs-toggle="dropdown">
+                                <div class="rounded-circle" style="width:38px;height:38px;background:#2f6df6;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;">
+                                    @initials
+                                </div>
+                                <span class="d-none d-md-block">@u?.FullName</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><a class="dropdown-item" asp-page="/Shop/Index">Espace Client</a></li>
+                                @if (User.IsInRole("Pharmacien"))
+                                {
+                                    <li><a class="dropdown-item" asp-page="/OrdersAdmin/Index">Commandes Clients</a></li>
+                                }
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form asp-page="/Identity/Account/Logout" asp-route-returnUrl="/" method="post">
+                                        <button type="submit" class="dropdown-item text-danger">Déconnexion</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <main class="p-4 flex-grow-1">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

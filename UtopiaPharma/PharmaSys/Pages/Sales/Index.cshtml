@@ -1,0 +1,101 @@
+﻿@page
+@model PharmaSys.Pages.Sales.IndexModel
+@{
+    ViewData["Title"] = "Ventes";
+}
+
+<div class="d-flex align-items-start justify-content-between mb-3">
+    <div>
+        <h2 class="fw-bold mb-1">Historique des Ventes</h2>
+        <div class="text-muted">@Model.Sales.Count transactions affichées</div>
+    </div>
+    <a class="btn btn-primary btn-pill" href="/Sales/Create">
+        <i class="bi bi-plus-lg me-2"></i>Nouvelle Vente
+    </a>
+</div>
+
+<div class="card-soft p-3">
+    <div class="d-flex gap-2 mb-3">
+        <form method="get" class="d-flex align-items-center gap-2" style="flex:1;">
+            <div class="searchbox d-flex align-items-center gap-2 w-100">
+                <i class="bi bi-search text-muted"></i>
+                <input name="Q" value="@Model.Q" placeholder="N° Facture, Nom Client..." />
+            </div>
+            <input type="date" name="Date" class="form-control" style="width: auto;" value="@Model.DateFilter?.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table align-middle table-hover">
+            <thead class="bg-light">
+                <tr>
+                    <th>Facture</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Total</th>
+                    <th>Payé</th>
+                    <th>Statut</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Sales.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Aucune vente trouvée
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var s in Model.Sales)
+                    {
+                        <tr>
+                            <td class="fw-bold text-primary">@s.InvoiceNo</td>
+                            <td class="text-muted">@s.SaleDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>
+                                @if (s.Client != null)
+                                {
+                                    <span class="fw-semibold">@s.Client.FullName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">Vente rapide</span>
+                                }
+                            </td>
+
+                            <td class="fw-bold">@s.Total.ToString("C")</td>
+                            <td class="text-muted">@s.Paid.ToString("C")</td>
+
+                            <td>
+                                @if (s.Status == "Paid")
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success">Payée</span>
+                                }
+                                else if (s.Status == "Partial")
+                                {
+                                    <span class="badge bg-warning-subtle text-warning border border-warning">Partielle</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger">Impayée</span>
+                                }
+                            </td>
+
+                            <td class="text-end">
+                                <a class="btn btn-light btn-sm btn-pill" href="/Sales/Details?id=@s.Id" title="Voir détails">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a class="btn btn-light btn-sm btn-pill" href="/Sales/Invoice?id=@s.Id" target="_blank" title="Imprimer Facture">
+                                    <i class="bi bi-printer"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
